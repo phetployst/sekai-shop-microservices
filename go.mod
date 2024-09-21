@@ -1,4 +1,4 @@
-module github.com/phetployst/hello-sekai-shop
+module github.com/phetployst/sekai-shop-microservices
 
 go 1.22.1
 
