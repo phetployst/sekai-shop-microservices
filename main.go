@@ -3,17 +3,14 @@ package main
 import (
 	"context"
 	"log"
-	"net/http"
 	"os"
 
-	"github.com/labstack/echo/v4"
 	"github.com/phetployst/sekai-shop-microservices/config"
+	"github.com/phetployst/sekai-shop-microservices/pkg/database"
 )
 
 func main() {
-	e := echo.New()
 	ctx := context.Background()
-	_ = ctx
 
 	cfg := config.LoadConfig(func() string {
 		if len(os.Args) < 2 {
@@ -22,11 +19,7 @@ func main() {
 		return os.Args[1]
 	}())
 
-	log.Println(cfg)
+	db := database.DbConn(ctx, &cfg)
+	defer db.Disconnect(ctx)
 
-	e.GET("/", func(c echo.Context) error {
-		return c.String(http.StatusOK, "Hello, World!!")
-	})
-
-	e.Logger.Fatal(e.Start(":1323"))
 }
