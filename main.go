@@ -7,6 +7,7 @@ import (
 
 	"github.com/phetployst/sekai-shop-microservices/config"
 	"github.com/phetployst/sekai-shop-microservices/pkg/database"
+	"github.com/phetployst/sekai-shop-microservices/server"
 )
 
 func main() {
@@ -22,4 +23,5 @@ func main() {
 	db := database.DbConn(ctx, &cfg)
 	defer db.Disconnect(ctx)
 
+	server.Start(ctx, &cfg, db)
 }
