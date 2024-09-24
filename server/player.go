@@ -16,6 +16,7 @@ func (s *server) playerService() {
 	_ = grpcHandler
 
 	player := s.app.Group("/player_v1")
-	_ = player
+
+	player.GET("/", s.healthCheckService)
 
 }
