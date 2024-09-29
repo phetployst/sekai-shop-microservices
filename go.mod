@@ -6,6 +6,7 @@ require (
 	github.com/go-playground/validator/v10 v10.22.1
 	github.com/joho/godotenv v1.5.1
 	github.com/labstack/echo/v4 v4.12.0
+	go.mongodb.org/mongo-driver v1.17.0
 	go.mongodb.org/mongo-driver/v2 v2.0.0-beta2
 )
 
