@@ -1,9 +1,13 @@
 package server
 
 import (
+	"log"
+
 	"github.com/phetployst/sekai-shop-microservices/modules/player/playerHandler"
+	"github.com/phetployst/sekai-shop-microservices/modules/player/playerPb"
 	"github.com/phetployst/sekai-shop-microservices/modules/player/playerRepository"
 	"github.com/phetployst/sekai-shop-microservices/modules/player/playerUsecase"
+	"github.com/phetployst/sekai-shop-microservices/pkg/grpccon"
 )
 
 func (s *server) playerService() {
@@ -12,8 +16,17 @@ func (s *server) playerService() {
 	httpHandler := playerHandler.NewPlayerHttpHandler(s.cfg, usecase)
 	grpcHandler := playerHandler.NewPlayerGrpcHandler(usecase)
 
+	// gRPC
+	go func() {
+		grpcServer, lis := grpccon.NewGrpcServer(&s.cfg.Jwt, s.cfg.Grpc.PlayerUrl)
+
+		playerPb.RegisterPlayerGrpcServiceServer(grpcServer, grpcHandler)
+
+		log.Printf("Player gRPC server listening on %s", s.cfg.Grpc.PlayerUrl)
+		grpcServer.Serve(lis)
+	}()
+
 	_ = httpHandler
-	_ = grpcHandler
 
 	player := s.app.Group("/player_v1")
 
