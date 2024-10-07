@@ -1,7 +1,23 @@
-.PHONY: run-local
-run-local:
-	@echo "Running the application locally..."
-	go run main.go ./env/dev/.env.auth
+.PHONY: run-local run-auth run-player run-inventory run-item run-payment
+
+RUN_CMD = @echo "Running the application with env file: $1"; go run main.go $1
+
+run-local: run-auth run-player run-inventory run-item run-payment
+
+run-auth:
+	$(call RUN_CMD, ./env/dev/.env.auth)
+
+run-player:
+	$(call RUN_CMD, ./env/dev/.env.player)
+
+run-inventory:
+	$(call RUN_CMD, ./env/dev/.env.inventory)
+
+run-item:
+	$(call RUN_CMD, ./env/dev/.env.item)
+
+run-payment:
+	$(call RUN_CMD, ./env/dev/.env.payment)
 
 .PHONY: setup-local-db
 setup-local-db:
