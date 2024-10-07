@@ -3,6 +3,7 @@ package playerHandler
 import (
 	"context"
 	"net/http"
+	"strings"
 
 	"github.com/labstack/echo/v4"
 	"github.com/phetployst/sekai-shop-microservices/config"
@@ -15,6 +16,7 @@ import (
 type (
 	PlayerHttpHandlerService interface {
 		CreatePlayer(c echo.Context) error
+		FindOnePlayerProfile(c echo.Context) error
 	}
 
 	playerHttpHandler struct {
@@ -44,4 +46,17 @@ func (h *playerHttpHandler) CreatePlayer(c echo.Context) error {
 	}
 
 	return response.SuccessResponse(c, http.StatusCreated, res)
+}
+
+func (h *playerHttpHandler) FindOnePlayerProfile(c echo.Context) error {
+	ctx := context.Background()
+
+	playerId := strings.TrimPrefix(c.Param("player_id"), "player:")
+
+	res, err := h.playerUsecase.FindOnePlayerProfile(ctx, playerId)
+	if err != nil {
+		return response.ErrResponse(c, http.StatusBadRequest, err.Error())
+	}
+
+	return response.SuccessResponse(c, http.StatusBadRequest, res)
 }

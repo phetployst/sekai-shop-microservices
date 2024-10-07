@@ -3,6 +3,7 @@ package playerUsecase
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/phetployst/sekai-shop-microservices/modules/player"
 	"github.com/phetployst/sekai-shop-microservices/modules/player/playerRepository"
@@ -12,7 +13,8 @@ import (
 
 type (
 	PlayerUsecaseService interface {
-		CreatePlayer(pctx context.Context, req *player.CreatePlayerReq) (string, error)
+		CreatePlayer(pctx context.Context, req *player.CreatePlayerReq) (*player.PlayerProfile, error)
+		FindOnePlayerProfile(pctx context.Context, playerId string) (*player.PlayerProfile, error)
 	}
 
 	playerUsecase struct {
@@ -24,15 +26,15 @@ func NewPlayerUsecase(playerRepository playerRepository.PlayerRepositoryService)
 	return &playerUsecase{playerRepository: playerRepository}
 }
 
-func (u *playerUsecase) CreatePlayer(pctx context.Context, req *player.CreatePlayerReq) (string, error) {
+func (u *playerUsecase) CreatePlayer(pctx context.Context, req *player.CreatePlayerReq) (*player.PlayerProfile, error) {
 	if !u.playerRepository.IsUniquePlayer(pctx, req.Email, req.Username) {
-		return "", errors.New("error: email or username already exist")
+		return nil, errors.New("error: email or username already exist")
 	}
 
 	// Hashing password
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 	if err != nil {
-		return "", errors.New("error: failed to hash password")
+		return nil, errors.New("error: failed to hash password")
 	}
 
 	// Insert one player
@@ -50,5 +52,22 @@ func (u *playerUsecase) CreatePlayer(pctx context.Context, req *player.CreatePla
 		},
 	})
 
-	return playerId.Hex(), nil
+	return u.FindOnePlayerProfile(pctx, playerId.Hex())
+}
+
+func (u *playerUsecase) FindOnePlayerProfile(pctx context.Context, playerId string) (*player.PlayerProfile, error) {
+	result, err := u.playerRepository.FindOnePlayerProfile(pctx, playerId)
+	if err != nil {
+		return nil, err
+	}
+
+	loc, _ := time.LoadLocation("Asia/Bangkok")
+
+	return &player.PlayerProfile{
+		Id:        result.Id.Hex(),
+		Email:     result.Email,
+		Username:  result.Username,
+		CreatedAt: result.CreatedAt.In(loc),
+		UpdatedAt: result.UpdatedAt.In(loc),
+	}, nil
 }

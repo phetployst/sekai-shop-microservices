@@ -7,15 +7,18 @@ import (
 	"time"
 
 	"github.com/phetployst/sekai-shop-microservices/modules/player"
+	"github.com/phetployst/sekai-shop-microservices/pkg/utils"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
 type (
 	PlayerRepositoryService interface {
 		IsUniquePlayer(pctx context.Context, email, username string) bool
 		InsertOnePlayer(pctx context.Context, req *player.Player) (primitive.ObjectID, error)
+		FindOnePlayerProfile(pctx context.Context, playerId string) (*player.PlayerProfileBson, error)
 	}
 
 	playerRepository struct {
@@ -66,4 +69,36 @@ func (r *playerRepository) InsertOnePlayer(pctx context.Context, req *player.Pla
 	}
 
 	return playerId.InsertedID.(primitive.ObjectID), nil
+}
+
+func (r *playerRepository) FindOnePlayerProfile(pctx context.Context, playerId string) (*player.PlayerProfileBson, error) {
+	ctx, cancel := context.WithTimeout(pctx, 10*time.Second)
+	defer cancel()
+
+	db := r.playerDbConn(ctx)
+	col := db.Collection("players")
+
+	result := new(player.PlayerProfileBson)
+
+	// ใช้ options.FindOne() เพื่อสร้าง options
+	findOneOptions := options.FindOne().SetProjection(
+		bson.M{
+			"_id":        1,
+			"email":      1,
+			"username":   1,
+			"created_at": 1,
+			"updated_at": 1,
+		},
+	)
+
+	if err := col.FindOne(
+		ctx,
+		bson.M{"_id": utils.ConvertToObjectId(playerId)},
+		findOneOptions,
+	).Decode(result); err != nil {
+		log.Printf("Error: FindOnePlayerProfile: %s", err.Error())
+		return nil, errors.New("error: player profile not found")
+	}
+
+	return result, nil
 }
