@@ -59,7 +59,7 @@ func (h *playerHttpHandler) FindOnePlayerProfile(c echo.Context) error {
 		return response.ErrResponse(c, http.StatusBadRequest, err.Error())
 	}
 
-	return response.SuccessResponse(c, http.StatusBadRequest, res)
+	return response.SuccessResponse(c, http.StatusOK, res)
 }
 
 func (h *playerHttpHandler) AddPlayerMoney(c echo.Context) error {
