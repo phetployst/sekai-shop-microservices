@@ -7,7 +7,7 @@ import (
 	"github.com/phetployst/sekai-shop-microservices/config"
 	"github.com/phetployst/sekai-shop-microservices/pkg/database"
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 func inventoryDbConn(pctx context.Context, cfg *config.Config) *mongo.Database {

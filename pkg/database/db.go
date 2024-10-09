@@ -6,9 +6,9 @@ import (
 	"time"
 
 	"github.com/phetployst/sekai-shop-microservices/config"
-	"go.mongodb.org/mongo-driver/v2/mongo"
-	"go.mongodb.org/mongo-driver/v2/mongo/options"
-	"go.mongodb.org/mongo-driver/v2/mongo/readpref"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/mongo/readpref"
 )
 
 func DbConn(pctx context.Context, cfg *config.Config) *mongo.Client {
@@ -16,7 +16,7 @@ func DbConn(pctx context.Context, cfg *config.Config) *mongo.Client {
 	ctx, cancel := context.WithTimeout(pctx, 10*time.Second)
 	defer cancel()
 
-	client, err := mongo.Connect(options.Client().ApplyURI(cfg.Db.Url))
+	client, err := mongo.Connect(ctx, options.Client().ApplyURI(cfg.Db.Url))
 	if err != nil {
 		log.Fatalf("Error: Conntect to database error: %s", err.Error())
 	}

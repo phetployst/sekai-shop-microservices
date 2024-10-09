@@ -9,7 +9,7 @@ import (
 	"github.com/phetployst/sekai-shop-microservices/pkg/database"
 	"github.com/phetployst/sekai-shop-microservices/pkg/utils"
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 func itemDbConn(pctx context.Context, cfg *config.Config) *mongo.Database {

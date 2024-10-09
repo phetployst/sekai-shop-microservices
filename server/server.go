@@ -15,7 +15,7 @@ import (
 	"github.com/phetployst/sekai-shop-microservices/modules/middleware/middlewareHandler"
 	"github.com/phetployst/sekai-shop-microservices/modules/middleware/middlewareRepository"
 	"github.com/phetployst/sekai-shop-microservices/modules/middleware/middlewareUsecase"
-	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type server struct {
