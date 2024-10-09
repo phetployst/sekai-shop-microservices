@@ -1,11 +1,14 @@
 package jwtauth
 
 import (
+	"context"
 	"errors"
 	"math"
+	"sync"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"google.golang.org/grpc/metadata"
 )
 
 type (
@@ -153,4 +156,18 @@ func ParseToken(secret string, tokenString string) (*AuthMapClaims, error) {
 	} else {
 		return nil, errors.New("error: claims type is invalid")
 	}
+}
+
+// Apikey  generator
+var apiKeyInstant string
+var once sync.Once
+
+func SetApiKey(secret string) {
+	once.Do(func() {
+		apiKeyInstant = NewApiKey(secret).SignToken()
+	})
+}
+
+func SetApiKeyInContext(pctx *context.Context) {
+	*pctx = metadata.NewOutgoingContext(*pctx, metadata.Pairs("auth", apiKeyInstant))
 }
