@@ -13,11 +13,11 @@ func (s *server) inventoryService() {
 	grpcHandler := inventoryHandler.NewInventoryGrpcHandler(usecase)
 	queueHandler := inventoryHandler.NewInventoryQueueHandler(s.cfg, usecase)
 
-	_ = httpHandler
 	_ = grpcHandler
 	_ = queueHandler
 
 	inventory := s.app.Group("/inventory_v1")
 
 	inventory.GET("/", s.healthCheckService)
+	inventory.GET("/inventory/:player_id", httpHandler.FindPlayerItems, s.middleware.JwtAuthorization, s.middleware.PlayerIdParamValidation)
 }
