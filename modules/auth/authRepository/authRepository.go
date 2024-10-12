@@ -26,6 +26,7 @@ type (
 		UpdateOnePlayerCredential(pctx context.Context, credentialId string, req *auth.UpdateRefreshTokenReq) error
 		DeleteOnePlayerCredential(pctx context.Context, credentialId string) (int64, error)
 		FindOneAccessToken(pctx context.Context, accessToken string) (*auth.Credential, error)
+		RolesCount(pctx context.Context) (int64, error)
 		AccessToken(cfg *config.Config, claims *jwtauth.Claims) string
 		RefreshToken(cfg *config.Config, claims *jwtauth.Claims) string
 	}
@@ -177,6 +178,22 @@ func (r *authRepository) FindOneAccessToken(pctx context.Context, accessToken st
 	}
 
 	return credential, nil
+}
+
+func (r *authRepository) RolesCount(pctx context.Context) (int64, error) {
+	ctx, cancel := context.WithTimeout(pctx, 10*time.Second)
+	defer cancel()
+
+	db := r.authDbConn(ctx)
+	col := db.Collection("roles")
+
+	count, err := col.CountDocuments(ctx, bson.M{})
+	if err != nil {
+		log.Printf("Error: RolesCount failed: %s", err.Error())
+		return -1, errors.New("error: roles count failed")
+	}
+
+	return count, nil
 }
 
 func (r *authRepository) AccessToken(cfg *config.Config, claims *jwtauth.Claims) string {
