@@ -9,6 +9,7 @@ import (
 
 	"github.com/phetployst/sekai-shop-microservices/config"
 	"github.com/phetployst/sekai-shop-microservices/modules/auth"
+	"github.com/phetployst/sekai-shop-microservices/modules/auth/authPb"
 	"github.com/phetployst/sekai-shop-microservices/modules/auth/authRepository"
 	"github.com/phetployst/sekai-shop-microservices/modules/player"
 	"github.com/phetployst/sekai-shop-microservices/modules/player/playerPb"
@@ -21,6 +22,7 @@ type (
 		Login(pctx context.Context, cfg *config.Config, req *auth.PlayerLoginReq) (*auth.ProfileIntercepter, error)
 		RefreshToken(pctx context.Context, cfg *config.Config, req *auth.RefreshTokenReq) (*auth.ProfileIntercepter, error)
 		Logout(pctx context.Context, credentialId string) (int64, error)
+		AccessTokenSearch(pctx context.Context, accessToken string) (*authPb.AccessTokenSearchRes, error)
 	}
 
 	authUsecase struct {
@@ -149,4 +151,23 @@ func (u *authUsecase) RefreshToken(pctx context.Context, cfg *config.Config, req
 
 func (u *authUsecase) Logout(pctx context.Context, credentialId string) (int64, error) {
 	return u.authRepository.DeleteOnePlayerCredential(pctx, credentialId)
+}
+
+func (u *authUsecase) AccessTokenSearch(pctx context.Context, accessToken string) (*authPb.AccessTokenSearchRes, error) {
+	credential, err := u.authRepository.FindOneAccessToken(pctx, accessToken)
+	if err != nil {
+		return &authPb.AccessTokenSearchRes{
+			IsValid: false,
+		}, err
+	}
+
+	if credential == nil {
+		return &authPb.AccessTokenSearchRes{
+			IsValid: false,
+		}, errors.New("error: access token is invalid")
+	}
+
+	return &authPb.AccessTokenSearchRes{
+		IsValid: true,
+	}, nil
 }
