@@ -7,13 +7,18 @@ import (
 	"time"
 
 	"github.com/phetployst/sekai-shop-microservices/modules/item/itemPb"
+	"github.com/phetployst/sekai-shop-microservices/modules/models"
 	"github.com/phetployst/sekai-shop-microservices/pkg/grpccon"
 	"github.com/phetployst/sekai-shop-microservices/pkg/jwtauth"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type (
 	PaymentRepositoryService interface {
+		GetOffset(pctx context.Context) (int64, error)
+		UpserOffset(pctx context.Context, offset int64) error
 		FindItemsInIds(pctx context.Context, grpcUrl string, req *itemPb.FindItemsInIdsReq) (*itemPb.FindItemsInIdsRes, error)
 	}
 
@@ -28,6 +33,39 @@ func NewPaymentRepository(db *mongo.Client) PaymentRepositoryService {
 
 func (r *paymentRepository) paymentDbConn(pctx context.Context) *mongo.Database {
 	return r.db.Database("payment_db")
+}
+
+func (r *paymentRepository) GetOffset(pctx context.Context) (int64, error) {
+	ctx, cancel := context.WithTimeout(pctx, 10*time.Second)
+	defer cancel()
+
+	db := r.paymentDbConn(ctx)
+	col := db.Collection("payment_queue")
+
+	result := new(models.KafkaOffset)
+	if err := col.FindOne(ctx, bson.M{}).Decode(result); err != nil {
+		log.Printf("Error: GetOffset failed: %s", err.Error())
+		return -1, errors.New("error: GetOffset failed")
+	}
+
+	return result.Offset, nil
+}
+
+func (r *paymentRepository) UpserOffset(pctx context.Context, offset int64) error {
+	ctx, cancel := context.WithTimeout(pctx, 10*time.Second)
+	defer cancel()
+
+	db := r.paymentDbConn(ctx)
+	col := db.Collection("payment_queue")
+
+	result, err := col.UpdateOne(ctx, bson.M{}, bson.M{"$set": bson.M{"offset": offset}}, options.Update().SetUpsert(true))
+	if err != nil {
+		log.Printf("Error: UpserOffset failed: %s", err.Error())
+		return errors.New("error: UpserOffset failed")
+	}
+	log.Printf("Info: UpserOffset result: %v", result)
+
+	return nil
 }
 
 func (r *paymentRepository) FindItemsInIds(pctx context.Context, grpcUrl string, req *itemPb.FindItemsInIdsReq) (*itemPb.FindItemsInIdsRes, error) {
