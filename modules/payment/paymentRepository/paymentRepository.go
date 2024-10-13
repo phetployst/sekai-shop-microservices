@@ -2,14 +2,19 @@ package paymentRepository
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"log"
 	"time"
 
+	"github.com/phetployst/sekai-shop-microservices/config"
+	"github.com/phetployst/sekai-shop-microservices/modules/inventory"
 	"github.com/phetployst/sekai-shop-microservices/modules/item/itemPb"
 	"github.com/phetployst/sekai-shop-microservices/modules/models"
+	"github.com/phetployst/sekai-shop-microservices/modules/player"
 	"github.com/phetployst/sekai-shop-microservices/pkg/grpccon"
 	"github.com/phetployst/sekai-shop-microservices/pkg/jwtauth"
+	"github.com/phetployst/sekai-shop-microservices/pkg/queue"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -20,6 +25,10 @@ type (
 		GetOffset(pctx context.Context) (int64, error)
 		UpserOffset(pctx context.Context, offset int64) error
 		FindItemsInIds(pctx context.Context, grpcUrl string, req *itemPb.FindItemsInIdsReq) (*itemPb.FindItemsInIdsRes, error)
+		DockedPlayerMoney(pctx context.Context, cfg *config.Config, req *player.CreatePlayerTransactionReq) error
+		RollbackTransaction(pctx context.Context, cfg *config.Config, req *player.RollbackPlayerTransactionReq) error
+		AddPlayerItem(pctx context.Context, cfg *config.Config, req *inventory.UpdateInventoryReq) error
+		RollbackAddPlayerItem(pctx context.Context, cfg *config.Config, req *inventory.RollbackPlayerInventoryReq) error
 	}
 
 	paymentRepository struct {
@@ -96,4 +105,92 @@ func (r *paymentRepository) FindItemsInIds(pctx context.Context, grpcUrl string,
 	}
 
 	return result, nil
+}
+
+func (r *paymentRepository) DockedPlayerMoney(pctx context.Context, cfg *config.Config, req *player.CreatePlayerTransactionReq) error {
+	reqInBytes, err := json.Marshal(req)
+	if err != nil {
+		log.Printf("Error: DockedPlayerMoney failed: %s", err.Error())
+		return errors.New("error: docked player money failed")
+	}
+
+	if err := queue.PushMessageWithKeyToQueue(
+		[]string{cfg.Kafka.Url},
+		cfg.Kafka.ApiKey,
+		cfg.Kafka.Secret,
+		"player",
+		"buy",
+		reqInBytes,
+	); err != nil {
+		log.Printf("Error: DockedPlayerMoney failed: %s", err.Error())
+		return errors.New("error: docked player money failed")
+	}
+
+	return nil
+}
+
+func (r *paymentRepository) RollbackTransaction(pctx context.Context, cfg *config.Config, req *player.RollbackPlayerTransactionReq) error {
+	reqInBytes, err := json.Marshal(req)
+	if err != nil {
+		log.Printf("Error: DockedPlayerMoney failed: %s", err.Error())
+		return errors.New("error: rollback player transaction failed")
+	}
+
+	if err := queue.PushMessageWithKeyToQueue(
+		[]string{cfg.Kafka.Url},
+		cfg.Kafka.ApiKey,
+		cfg.Kafka.Secret,
+		"player",
+		"rtransaction",
+		reqInBytes,
+	); err != nil {
+		log.Printf("Error: DockedPlayerMoney failed: %s", err.Error())
+		return errors.New("error: rollback player transaction failed")
+	}
+
+	return nil
+}
+
+func (r *paymentRepository) AddPlayerItem(pctx context.Context, cfg *config.Config, req *inventory.UpdateInventoryReq) error {
+	reqInBytes, err := json.Marshal(req)
+	if err != nil {
+		log.Printf("Error: AddPlayerItem failed: %s", err.Error())
+		return errors.New("error: add player item failed")
+	}
+
+	if err := queue.PushMessageWithKeyToQueue(
+		[]string{cfg.Kafka.Url},
+		cfg.Kafka.ApiKey,
+		cfg.Kafka.Secret,
+		"inventory",
+		"buy",
+		reqInBytes,
+	); err != nil {
+		log.Printf("Error: AddPlayerItem failed: %s", err.Error())
+		return errors.New("error: add player item failed")
+	}
+
+	return nil
+}
+
+func (r *paymentRepository) RollbackAddPlayerItem(pctx context.Context, cfg *config.Config, req *inventory.RollbackPlayerInventoryReq) error {
+	reqInBytes, err := json.Marshal(req)
+	if err != nil {
+		log.Printf("Error: RollbackAddPlayerItem failed: %s", err.Error())
+		return errors.New("error: rollback add player item failed")
+	}
+
+	if err := queue.PushMessageWithKeyToQueue(
+		[]string{cfg.Kafka.Url},
+		cfg.Kafka.ApiKey,
+		cfg.Kafka.Secret,
+		"inventory",
+		"radd",
+		reqInBytes,
+	); err != nil {
+		log.Printf("Error: RollbackAddPlayerItem failed: %s", err.Error())
+		return errors.New("error: rollback add player item failed")
+	}
+
+	return nil
 }

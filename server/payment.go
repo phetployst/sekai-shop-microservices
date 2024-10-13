@@ -12,11 +12,10 @@ func (s *server) paymentService() {
 	httpHandler := paymentHandler.NewPaymentHttpHandler(s.cfg, usecase)
 	queueHandler := paymentHandler.NewPaymentQueueHandler(s.cfg, usecase)
 
-	_ = httpHandler
 	_ = queueHandler
 
 	payment := s.app.Group("/payment_v1")
 
 	payment.GET("/", s.healthCheckService)
-
+	payment.POST("/payment/buy", httpHandler.BuyItem, s.middleware.JwtAuthorization)
 }
