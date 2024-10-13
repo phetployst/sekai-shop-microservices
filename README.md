@@ -2,7 +2,7 @@
 
 <h2>📝 Architecture</h2>
 
-<img src="./screenshots/arch_v3.png" alt="arch_v3.png">
+<img src="./pkg/architecture/arch_v3.png" alt="arch_v3.png">
 
 <h2>📦 Packages</h2>
 
