@@ -29,6 +29,9 @@ type (
 		RollbackTransaction(pctx context.Context, cfg *config.Config, req *player.RollbackPlayerTransactionReq) error
 		AddPlayerItem(pctx context.Context, cfg *config.Config, req *inventory.UpdateInventoryReq) error
 		RollbackAddPlayerItem(pctx context.Context, cfg *config.Config, req *inventory.RollbackPlayerInventoryReq) error
+		RemovePlayerItem(pctx context.Context, cfg *config.Config, req *inventory.UpdateInventoryReq) error
+		RollbackRemovePlayerItem(pctx context.Context, cfg *config.Config, req *inventory.RollbackPlayerInventoryReq) error
+		AddPlayerMoney(pctx context.Context, cfg *config.Config, req *player.CreatePlayerTransactionReq) error
 	}
 
 	paymentRepository struct {
@@ -129,6 +132,28 @@ func (r *paymentRepository) DockedPlayerMoney(pctx context.Context, cfg *config.
 	return nil
 }
 
+func (r *paymentRepository) AddPlayerMoney(pctx context.Context, cfg *config.Config, req *player.CreatePlayerTransactionReq) error {
+	reqInBytes, err := json.Marshal(req)
+	if err != nil {
+		log.Printf("Error: AddPlayerMoney failed: %s", err.Error())
+		return errors.New("error: add player money failed")
+	}
+
+	if err := queue.PushMessageWithKeyToQueue(
+		[]string{cfg.Kafka.Url},
+		cfg.Kafka.ApiKey,
+		cfg.Kafka.Secret,
+		"player",
+		"sell",
+		reqInBytes,
+	); err != nil {
+		log.Printf("Error: AddPlayerMoney failed: %s", err.Error())
+		return errors.New("error: add player money failed")
+	}
+
+	return nil
+}
+
 func (r *paymentRepository) RollbackTransaction(pctx context.Context, cfg *config.Config, req *player.RollbackPlayerTransactionReq) error {
 	reqInBytes, err := json.Marshal(req)
 	if err != nil {
@@ -190,6 +215,50 @@ func (r *paymentRepository) RollbackAddPlayerItem(pctx context.Context, cfg *con
 	); err != nil {
 		log.Printf("Error: RollbackAddPlayerItem failed: %s", err.Error())
 		return errors.New("error: rollback add player item failed")
+	}
+
+	return nil
+}
+
+func (r *paymentRepository) RemovePlayerItem(pctx context.Context, cfg *config.Config, req *inventory.UpdateInventoryReq) error {
+	reqInBytes, err := json.Marshal(req)
+	if err != nil {
+		log.Printf("Error: RemovePlayerItem failed: %s", err.Error())
+		return errors.New("error: remove player item failed")
+	}
+
+	if err := queue.PushMessageWithKeyToQueue(
+		[]string{cfg.Kafka.Url},
+		cfg.Kafka.ApiKey,
+		cfg.Kafka.Secret,
+		"inventory",
+		"sell",
+		reqInBytes,
+	); err != nil {
+		log.Printf("Error: RemovePlayerItem failed: %s", err.Error())
+		return errors.New("error: remove player item failed")
+	}
+
+	return nil
+}
+
+func (r *paymentRepository) RollbackRemovePlayerItem(pctx context.Context, cfg *config.Config, req *inventory.RollbackPlayerInventoryReq) error {
+	reqInBytes, err := json.Marshal(req)
+	if err != nil {
+		log.Printf("Error: RollbackRemovePlayerItem failed: %s", err.Error())
+		return errors.New("error: rollback remove player item failed")
+	}
+
+	if err := queue.PushMessageWithKeyToQueue(
+		[]string{cfg.Kafka.Url},
+		cfg.Kafka.ApiKey,
+		cfg.Kafka.Secret,
+		"inventory",
+		"rremove",
+		reqInBytes,
+	); err != nil {
+		log.Printf("Error: RollbackRemovePlayerItem failed: %s", err.Error())
+		return errors.New("error: rollback remove player item failed")
 	}
 
 	return nil
