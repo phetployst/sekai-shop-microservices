@@ -15,6 +15,11 @@ func (s *server) playerService() {
 	usecase := playerUsecase.NewPlayerUsecase(repo)
 	httpHandler := playerHandler.NewPlayerHttpHandler(s.cfg, usecase)
 	grpcHandler := playerHandler.NewPlayerGrpcHandler(usecase)
+	queueHandler := playerHandler.NewPlayerQueueHandler(s.cfg, usecase)
+
+	go queueHandler.DockedPlayerMoney()
+	go queueHandler.AddPlayerMoney()
+	go queueHandler.RollbackPlayerTransaction()
 
 	// gRPC
 	go func() {
