@@ -1,4 +1,5 @@
 <h1>⚔️ Hello Sekai Shop Microservices</h1>
+<p>This repository is part of the project-based learning course on <a href="https://www.udemy.com/share/109Dc23@aj4rHWDQT9nbS4QiwJ52kBMvb2YYynWGioszam-FY_EDHCmzAhypUOQu33pvpCgZ0w==/" target="_blank">Udemy</a>, This course provides hands-on experience in implementing and deploying microservices for an e-commerce platform.</p>
 
 <h2>📝 Architecture</h2>
 
